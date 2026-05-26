@@ -110,6 +110,7 @@ public class BallController : MonoBehaviour
     {
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
         isGrounded = false;
+        PlayerPrefs.SetInt("TotalJumps", PlayerPrefs.GetInt("TotalJumps", 0) + 1);
     }
 
     void FixedUpdate()

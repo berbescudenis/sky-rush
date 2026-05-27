@@ -20,7 +20,14 @@ public class PowerUpManager : MonoBehaviour
     public float MagnetTimeLeft  => magnetTimer;
     public float ClockTimeLeft   => clockTimer;
 
-    void Awake() { instance = this; }
+    void Awake()
+    {
+        instance = this;
+        if (!PlayerPrefs.HasKey("PowerUp_Shield")) PlayerPrefs.SetInt("PowerUp_Shield", 3);
+        if (!PlayerPrefs.HasKey("PowerUp_Magnet")) PlayerPrefs.SetInt("PowerUp_Magnet", 3);
+        if (!PlayerPrefs.HasKey("PowerUp_Clock"))  PlayerPrefs.SetInt("PowerUp_Clock",  3);
+        PlayerPrefs.Save();
+    }
 
     void Update()
     {

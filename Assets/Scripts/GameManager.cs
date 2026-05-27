@@ -25,6 +25,9 @@ public class GameManager : MonoBehaviour
 
         isGameOver = true;
 
+        PowerUpHUD hud = FindObjectOfType<PowerUpHUD>();
+        if (hud != null) hud.gameObject.SetActive(false);
+
         BallController ball = FindObjectOfType<BallController>();
         if (ball != null) ball.Die();
 

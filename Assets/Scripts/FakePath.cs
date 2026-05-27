@@ -9,7 +9,6 @@ public class FakePath : MonoBehaviour
     private float timer = 0f;
     private Color warningColor = new Color(1f, 0.2f, 0.2f, 1f);
     private Color normalColor = new Color(0.9f, 0.9f, 0.9f, 1f);
-    private bool isFlashing = false;
     private float flashTimer = 0f;
     private bool isCurrentlyRed = false;
 
@@ -22,8 +21,6 @@ public class FakePath : MonoBehaviour
 
     System.Collections.IEnumerator ActivateSequence()
     {
-        // Flash red for warning duration
-        isFlashing = true;
         float elapsed = 0f;
 
         while (elapsed < warningDuration)
@@ -43,8 +40,6 @@ public class FakePath : MonoBehaviour
             yield return null;
         }
 
-        // Lock to red — now active and deadly
-        isFlashing = false;
         isActive = true;
         if (laneRenderer != null)
             laneRenderer.material.color = warningColor;

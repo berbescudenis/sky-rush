@@ -19,6 +19,7 @@ public class BallController : MonoBehaviour
     private bool isGrounded = false;
 
     [SerializeField] private UnityEngine.UI.Image flashOverlay;
+    public Material[] ballMaterials;
 
     private Vector2 touchStart;
     private bool isSwiping = false;
@@ -30,6 +31,23 @@ public class BallController : MonoBehaviour
         targetX = 0f;
         currentSpeed = startSpeed;
         trail = GetComponent<TrailRenderer>();
+        ApplyBallVisuals();
+    }
+
+    void ApplyBallVisuals()
+    {
+        int index = PlayerPrefs.GetInt("SelectedBall", 0);
+        if (ballMaterials == null || index >= ballMaterials.Length) return;
+
+        Renderer r = GetComponent<Renderer>();
+        if (r != null) r.material = ballMaterials[index];
+
+        if (trail != null && ballMaterials[index] != null)
+        {
+            Color c = ballMaterials[index].color;
+            trail.startColor = new Color(c.r, c.g, c.b, 1f);
+            trail.endColor   = new Color(c.r, c.g, c.b, 0f);
+        }
     }
 
     void Update()

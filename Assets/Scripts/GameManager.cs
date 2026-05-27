@@ -15,6 +15,14 @@ public class GameManager : MonoBehaviour
     public void GameOver()
     {
         if (isGameOver) return;
+
+        // Shield absorbs the hit — player survives
+        if (PowerUpManager.instance != null && PowerUpManager.instance.ConsumeShield())
+        {
+            if (CameraShake.instance != null) CameraShake.instance.Shake(0.2f, 0.15f);
+            return;
+        }
+
         isGameOver = true;
 
         BallController ball = FindObjectOfType<BallController>();

@@ -20,6 +20,7 @@ public class BallController : MonoBehaviour
 
     [SerializeField] private UnityEngine.UI.Image flashOverlay;
     public Material[] ballMaterials;
+    public GameObject shieldVisual;
 
     private Vector2 touchStart;
     private bool isSwiping = false;
@@ -170,6 +171,11 @@ public class BallController : MonoBehaviour
         currentLane = lane;
         targetX = (lane - 1) * laneDistance;
         rb.position = new Vector3(targetX, rb.position.y, zPosition);
+    }
+
+    public void ShowShield(bool show)
+    {
+        if (shieldVisual != null) shieldVisual.SetActive(show);
     }
 
     public void Die()

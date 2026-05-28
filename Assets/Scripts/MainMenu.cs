@@ -47,7 +47,7 @@ public class MainMenu : MonoBehaviour
         RefreshAll();
     }
 
-    void RefreshAll()
+    public void RefreshAll()
     {
         RefreshProfile();
         RefreshCurrencies();

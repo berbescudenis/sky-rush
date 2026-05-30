@@ -1,10 +1,11 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class BallController : MonoBehaviour
 {
     public float startSpeed = 10f;
     public float maxSpeed = 50f;
-    public float speedIncreaseRate = 0.8f;
+    public float speedIncreaseRate = 0.15f;
     public float laneDistance = 2f;
     public float laneSwitchSpeed = 8f;
     public float jumpForce = 7f;
@@ -24,7 +25,7 @@ public class BallController : MonoBehaviour
 
     private Vector2 touchStart;
     private bool isSwiping = false;
-    private float swipeThreshold = 50f;
+    private float swipeThreshold = 20f;
 
     void Start()
     {
@@ -80,7 +81,13 @@ public class BallController : MonoBehaviour
         {
             Touch touch = Input.GetTouch(0);
 
-            if (touch.phase == TouchPhase.Began)
+            // Ignore touches on UI buttons (prevents power-up taps triggering jump)
+            bool overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId);
+            if (overUI)
+            {
+                if (touch.phase == TouchPhase.Ended) isSwiping = false;
+            }
+            else if (touch.phase == TouchPhase.Began)
             {
                 touchStart = touch.position;
                 isSwiping = true;
@@ -114,10 +121,6 @@ public class BallController : MonoBehaviour
             }
         }
 
-        Vector3 pos = transform.position;
-        pos.x = Mathf.Lerp(pos.x, targetX, Time.deltaTime * laneSwitchSpeed);
-        transform.position = pos;
-
         if (trail != null)
         {
             float speedPercent = currentSpeed / maxSpeed;
@@ -135,6 +138,12 @@ public class BallController : MonoBehaviour
     void FixedUpdate()
     {
         if (isDead) return;
+
+        // Move X directly on the Rigidbody (no physics collision on X = no track seam bouncing)
+        Vector3 pos = rb.position;
+        pos.x = Mathf.MoveTowards(pos.x, targetX, Time.fixedDeltaTime * laneSwitchSpeed * laneDistance);
+        rb.position = pos;
+
         rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, currentSpeed);
 
         if (!isGrounded)

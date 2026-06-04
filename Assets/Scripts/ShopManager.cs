@@ -53,19 +53,24 @@ public class ShopManager : MonoBehaviour
         int magnets = PlayerPrefs.GetInt("PowerUp_Magnet", 0);
         int clocks  = PlayerPrefs.GetInt("PowerUp_Clock",  0);
 
+        // Read unlock state directly from PlayerPrefs (PowerUpManager lives in game scene, not here)
+        bool shieldUnlocked = PlayerPrefs.GetInt("Shield_Unlocked", 0) == 1;
+        bool magnetUnlocked = PlayerPrefs.GetInt("Magnet_Unlocked", 0) == 1;
+        bool clockUnlocked  = PlayerPrefs.GetInt("Clock_Unlocked",  0) == 1;
+
         if (coinBalanceText != null) coinBalanceText.text = coins.ToString("N0") + " coins";
 
-        if (shieldCountText != null) shieldCountText.text = "x" + shields;
-        if (magnetCountText != null) magnetCountText.text = "x" + magnets;
-        if (clockCountText  != null) clockCountText.text  = "x" + clocks;
+        if (shieldCountText != null) shieldCountText.text = shieldUnlocked ? "x" + shields : "Locked";
+        if (magnetCountText != null) magnetCountText.text = magnetUnlocked ? "x" + magnets : "Locked";
+        if (clockCountText  != null) clockCountText.text  = clockUnlocked  ? "x" + clocks  : "Locked";
 
-        if (shieldPriceText != null) shieldPriceText.text = shieldPrice + " coins";
-        if (magnetPriceText != null) magnetPriceText.text = magnetPrice + " coins";
-        if (clockPriceText  != null) clockPriceText.text  = clockPrice  + " coins";
+        if (shieldPriceText != null) shieldPriceText.text = shieldUnlocked ? shieldPrice + " coins" : "Reach Phase 2";
+        if (magnetPriceText != null) magnetPriceText.text = magnetUnlocked ? magnetPrice + " coins" : "Reach Phase 3";
+        if (clockPriceText  != null) clockPriceText.text  = clockUnlocked  ? clockPrice  + " coins" : "Reach Phase 4";
 
-        if (buyShieldButton != null) buyShieldButton.interactable = coins >= shieldPrice && shields < maxCharges;
-        if (buyMagnetButton != null) buyMagnetButton.interactable = coins >= magnetPrice && magnets < maxCharges;
-        if (buyClockButton  != null) buyClockButton.interactable  = coins >= clockPrice  && clocks  < maxCharges;
+        if (buyShieldButton != null) buyShieldButton.interactable = shieldUnlocked && coins >= shieldPrice && shields < maxCharges;
+        if (buyMagnetButton != null) buyMagnetButton.interactable = magnetUnlocked && coins >= magnetPrice && magnets < maxCharges;
+        if (buyClockButton  != null) buyClockButton.interactable  = clockUnlocked  && coins >= clockPrice  && clocks  < maxCharges;
 
         if (feedbackText != null) feedbackText.text = "";
     }

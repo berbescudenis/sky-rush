@@ -24,7 +24,8 @@ public class Coin : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             CoinManager.instance.AddCoin();
-            Destroy(gameObject);
+            gameObject.SetActive(false);  // hide instantly — no GC spike here
+            Destroy(gameObject, 3f);       // actual cleanup happens 3s later, off-screen
         }
     }
 }

@@ -153,10 +153,11 @@ public class BallController : MonoBehaviour
     {
         if (isDead) return;
 
-        // Move X directly on the Rigidbody (no physics collision on X = no track seam bouncing)
+        // MovePosition (not rb.position =) so Unity's interpolation smooths the rendered position
+        // between FixedUpdate ticks — prevents the stutter visible when changing lanes
         Vector3 pos = rb.position;
         pos.x = Mathf.MoveTowards(pos.x, targetX, Time.fixedDeltaTime * laneSwitchSpeed * laneDistance);
-        rb.position = pos;
+        rb.MovePosition(pos);
 
         rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, currentSpeed);
 

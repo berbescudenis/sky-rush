@@ -25,11 +25,14 @@ public class GameManager : MonoBehaviour
 
         isGameOver = true;
 
+        // Save stats now — no more per-coin or per-jump PlayerPrefs writes during gameplay
+        if (CoinManager.instance != null) CoinManager.instance.SaveCoins();
+        if (BallController.instance != null) BallController.instance.SaveJumps();
+
         PowerUpHUD hud = FindObjectOfType<PowerUpHUD>();
         if (hud != null) hud.gameObject.SetActive(false);
 
-        BallController ball = FindObjectOfType<BallController>();
-        if (ball != null) ball.Die();
+        if (BallController.instance != null) BallController.instance.Die();
 
         if (ScoreManager.instance != null) ScoreManager.instance.StopScore();
 

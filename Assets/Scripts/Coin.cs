@@ -2,23 +2,21 @@ using UnityEngine;
 
 public class Coin : MonoBehaviour
 {
-    public float rotateSpeed  = 180f;
-    public float magnetSpeed  = 18f;
-
-    private Transform ball;
-
-    void Start()
-    {
-        BallController b = FindObjectOfType<BallController>();
-        if (b != null) ball = b.transform;
-    }
+    public float rotateSpeed = 180f;
+    public float magnetSpeed = 18f;
 
     void Update()
     {
         transform.Rotate(0, rotateSpeed * Time.deltaTime, 0);
 
-        if (ball != null && PowerUpManager.instance != null && PowerUpManager.instance.IsMagnetActive)
-            transform.position = Vector3.MoveTowards(transform.position, ball.position, magnetSpeed * Time.deltaTime);
+        if (PowerUpManager.instance != null && PowerUpManager.instance.IsMagnetActive
+            && BallController.instance != null)
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                BallController.instance.transform.position,
+                magnetSpeed * Time.deltaTime);
+        }
     }
 
     void OnTriggerEnter(Collider other)

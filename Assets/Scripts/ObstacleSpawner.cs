@@ -109,9 +109,16 @@ public class ObstacleSpawner : MonoBehaviour
 
     void SpawnCoinRow(float xPos)
     {
+        // Capture Z now — nextSpawnZ will change by the time coroutine runs later frames
+        StartCoroutine(SpawnCoinsOverTime(xPos, nextSpawnZ));
+    }
+
+    System.Collections.IEnumerator SpawnCoinsOverTime(float xPos, float startZ)
+    {
         for (int i = 0; i < 5; i++)
         {
-            Spawn(coinPrefab, new Vector3(xPos, 0.8f, nextSpawnZ + i * 2f));
+            Spawn(coinPrefab, new Vector3(xPos, 0.8f, startZ + i * 2f));
+            yield return null; // one coin per frame — coins spawn 80 units ahead so player never notices
         }
     }
 }

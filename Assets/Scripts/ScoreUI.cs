@@ -10,19 +10,68 @@ public class ScoreUI : MonoBehaviour
     public TextMeshProUGUI comboText;
     public TextMeshProUGUI distanceText;
 
+    // Cache last-shown values — text only updates when the value actually changes
+    private int   lastScore    = -1;
+    private int   lastBest     = -1;
+    private int   lastCoins    = -1;
+    private int   lastCombo    = -1;
+    private int   lastDistance = -1;
+    private string lastPhase   = null;
+
     void Update()
     {
         if (ScoreManager.instance != null)
         {
-            if (scoreText != null)    scoreText.text    = ScoreManager.instance.GetScore().ToString();
-            if (bestScoreText != null) bestScoreText.text = "BEST: " + ScoreManager.instance.GetBestScore();
-            if (distanceText != null) distanceText.text = ScoreManager.instance.GetDistanceString();
+            int score = ScoreManager.instance.GetScore();
+            if (scoreText != null && score != lastScore)
+            {
+                lastScore = score;
+                scoreText.text = score.ToString();
+            }
+
+            int best = ScoreManager.instance.GetBestScore();
+            if (bestScoreText != null && best != lastBest)
+            {
+                lastBest = best;
+                bestScoreText.text = "BEST: " + best;
+            }
+
+            int dist = ScoreManager.instance.GetDistanceMeters();
+            if (distanceText != null && dist != lastDistance)
+            {
+                lastDistance = dist;
+                distanceText.text = ScoreManager.instance.GetDistanceString();
+            }
         }
+
         if (CoinManager.instance != null && coinText != null)
-            coinText.text = "COINS: " + CoinManager.instance.GetCoinsThisRun();
+        {
+            int coins = CoinManager.instance.GetCoinsThisRun();
+            if (coins != lastCoins)
+            {
+                lastCoins = coins;
+                coinText.text = "COINS: " + coins;
+            }
+        }
+
         if (PhaseManager.instance != null && phaseText != null)
-            phaseText.text = PhaseManager.instance.GetPhaseName();
+        {
+            string phase = PhaseManager.instance.GetPhaseName();
+            if (phase != lastPhase)
+            {
+                lastPhase = phase;
+                phaseText.text = phase;
+            }
+        }
+
         if (ComboManager.instance != null && comboText != null)
-            comboText.text = "x" + ComboManager.instance.GetCombo();
+        {
+            int combo = ComboManager.instance.GetCombo();
+            if (combo != lastCombo)
+            {
+                lastCombo = combo;
+                comboText.text = "x" + combo;
+            }
+        }
     }
 }

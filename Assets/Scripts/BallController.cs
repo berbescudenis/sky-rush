@@ -3,6 +3,8 @@ using UnityEngine.EventSystems;
 
 public class BallController : MonoBehaviour
 {
+    public static BallController instance;
+
     public float startSpeed = 10f;
     public float maxSpeed = 50f;
     public float speedIncreaseRate = 0.15f;
@@ -13,6 +15,7 @@ public class BallController : MonoBehaviour
 
     [HideInInspector] public float currentSpeed;
     private int currentLane = 1;
+    private int jumpsThisRun = 0;
     private float targetX;
     private Rigidbody rb;
     private bool isDead = false;
@@ -26,6 +29,11 @@ public class BallController : MonoBehaviour
     private Vector2 touchStart;
     private bool isSwiping = false;
     private float swipeThreshold = 20f;
+
+    void Awake()
+    {
+        instance = this;
+    }
 
     void Start()
     {
@@ -124,7 +132,7 @@ public class BallController : MonoBehaviour
         if (trail != null)
         {
             float speedPercent = currentSpeed / maxSpeed;
-            trail.time = Mathf.Lerp(0.1f, 0.5f, speedPercent);
+            trail.time = Mathf.Lerp(0.05f, 0.25f, speedPercent);
         }
     }
 
@@ -132,17 +140,24 @@ public class BallController : MonoBehaviour
     {
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
         isGrounded = false;
-        PlayerPrefs.SetInt("TotalJumps", PlayerPrefs.GetInt("TotalJumps", 0) + 1);
+        jumpsThisRun++;
+    }
+
+    public void SaveJumps()
+    {
+        PlayerPrefs.SetInt("TotalJumps", PlayerPrefs.GetInt("TotalJumps", 0) + jumpsThisRun);
+        jumpsThisRun = 0;
     }
 
     void FixedUpdate()
     {
         if (isDead) return;
 
-        // Move X directly on the Rigidbody (no physics collision on X = no track seam bouncing)
+        // MovePosition (not rb.position =) so Unity's interpolation smooths the rendered position
+        // between FixedUpdate ticks — prevents the stutter visible when changing lanes
         Vector3 pos = rb.position;
         pos.x = Mathf.MoveTowards(pos.x, targetX, Time.fixedDeltaTime * laneSwitchSpeed * laneDistance);
-        rb.position = pos;
+        rb.MovePosition(pos);
 
         rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, currentSpeed);
 

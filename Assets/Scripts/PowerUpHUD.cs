@@ -18,32 +18,58 @@ public class PowerUpHUD : MonoBehaviour
     public TextMeshProUGUI  clockCountText;
     public Slider           clockTimerBar;
 
+    // Cache last-shown state — text only rebuilds when something actually changes
+    private int  lastShields      = -1;
+    private int  lastMagnets      = -1;
+    private int  lastClocks       = -1;
+    private bool lastShieldLocked = true;   // assume locked → forces first-frame update
+    private bool lastMagnetLocked = true;
+    private bool lastClockLocked  = true;
+
     void Update()
     {
         var pm = PowerUpManager.instance;
         if (pm == null) return;
 
-        int shields = PlayerPrefs.GetInt("PowerUp_Shield", 0);
-        int magnets = PlayerPrefs.GetInt("PowerUp_Magnet", 0);
-        int clocks  = PlayerPrefs.GetInt("PowerUp_Clock",  0);
+        bool shieldLocked = !pm.IsShieldUnlocked;
+        bool magnetLocked = !pm.IsMagnetUnlocked;
+        bool clockLocked  = !pm.IsClockUnlocked;
 
-        if (shieldCountText != null) shieldCountText.text = shields.ToString();
-        if (magnetCountText != null) magnetCountText.text = magnets.ToString();
-        if (clockCountText  != null) clockCountText.text  = clocks.ToString();
+        int shields = pm.ShieldCount;
+        int magnets = pm.MagnetCount;
+        int clocks  = pm.ClockCount;
 
-        if (shieldButton != null) shieldButton.interactable = shields > 0 && !pm.IsShieldActive;
-        if (magnetButton != null) magnetButton.interactable = magnets > 0 && !pm.IsMagnetActive;
-        if (clockButton  != null) clockButton.interactable  = clocks  > 0 && !pm.IsClockActive;
+        // Shield
+        if (shieldCountText != null && (shieldLocked != lastShieldLocked || shields != lastShields))
+        {
+            lastShieldLocked = shieldLocked;
+            lastShields      = shields;
+            shieldCountText.text = shieldLocked ? "Ph.2" : shields.ToString();
+        }
+        // Magnet
+        if (magnetCountText != null && (magnetLocked != lastMagnetLocked || magnets != lastMagnets))
+        {
+            lastMagnetLocked = magnetLocked;
+            lastMagnets      = magnets;
+            magnetCountText.text = magnetLocked ? "Ph.3" : magnets.ToString();
+        }
+        // Clock
+        if (clockCountText != null && (clockLocked != lastClockLocked || clocks != lastClocks))
+        {
+            lastClockLocked = clockLocked;
+            lastClocks      = clocks;
+            clockCountText.text = clockLocked ? "Ph.4" : clocks.ToString();
+        }
+
+        if (shieldButton != null) shieldButton.interactable = !shieldLocked && shields > 0 && !pm.IsShieldActive;
+        if (magnetButton != null) magnetButton.interactable = !magnetLocked && magnets > 0 && !pm.IsMagnetActive;
+        if (clockButton  != null) clockButton.interactable  = !clockLocked  && clocks  > 0 && !pm.IsClockActive;
 
         if (magnetTimerBar != null)
-            magnetTimerBar.value = pm.IsMagnetActive
-                ? pm.MagnetTimeLeft / PowerUpManager.instance.magnetDuration
-                : 0f;
+            magnetTimerBar.value = pm.IsMagnetActive ? pm.MagnetTimeLeft / pm.magnetDuration : 0f;
 
         if (clockTimerBar != null)
-            clockTimerBar.value = pm.IsClockActive
-                ? pm.ClockTimeLeft / PowerUpManager.instance.clockDuration
-                : 0f;
+            clockTimerBar.value = pm.IsClockActive ? pm.ClockTimeLeft / pm.clockDuration : 0f;
     }
 
     public void OnShieldPressed() { PowerUpManager.instance?.ActivateShield(); }

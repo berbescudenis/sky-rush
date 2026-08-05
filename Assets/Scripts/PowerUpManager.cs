@@ -14,19 +14,81 @@ public class PowerUpManager : MonoBehaviour
     private float magnetTimer  = 0f;
     private float clockTimer   = 0f;
 
-    public bool  IsShieldActive  => shieldActive;
-    public bool  IsMagnetActive  => magnetActive;
-    public bool  IsClockActive   => clockActive;
-    public float MagnetTimeLeft  => magnetTimer;
-    public float ClockTimeLeft   => clockTimer;
+    // Cached in Awake — PowerUpHUD reads these instead of PlayerPrefs per-frame
+    private int  shieldCount;
+    private int  magnetCount;
+    private int  clockCount;
+
+    // Permanent unlock flags — set when phase is reached for the first time
+    private bool shieldUnlocked;
+    private bool magnetUnlocked;
+    private bool clockUnlocked;
+
+    public bool  IsShieldActive   => shieldActive;
+    public bool  IsMagnetActive   => magnetActive;
+    public bool  IsClockActive    => clockActive;
+    public float MagnetTimeLeft   => magnetTimer;
+    public float ClockTimeLeft    => clockTimer;
+    public int   ShieldCount      => shieldCount;
+    public int   MagnetCount      => magnetCount;
+    public int   ClockCount       => clockCount;
+    public bool  IsShieldUnlocked => shieldUnlocked;
+    public bool  IsMagnetUnlocked => magnetUnlocked;
+    public bool  IsClockUnlocked  => clockUnlocked;
 
     void Awake()
     {
         instance = this;
-        if (!PlayerPrefs.HasKey("PowerUp_Shield")) PlayerPrefs.SetInt("PowerUp_Shield", 3);
-        if (!PlayerPrefs.HasKey("PowerUp_Magnet")) PlayerPrefs.SetInt("PowerUp_Magnet", 3);
-        if (!PlayerPrefs.HasKey("PowerUp_Clock"))  PlayerPrefs.SetInt("PowerUp_Clock",  3);
+        // New installs start with 0 charges — player earns them through the shop
+        if (!PlayerPrefs.HasKey("PowerUp_Shield")) PlayerPrefs.SetInt("PowerUp_Shield", 0);
+        if (!PlayerPrefs.HasKey("PowerUp_Magnet")) PlayerPrefs.SetInt("PowerUp_Magnet", 0);
+        if (!PlayerPrefs.HasKey("PowerUp_Clock"))  PlayerPrefs.SetInt("PowerUp_Clock",  0);
+        // Cache counts — PowerUpHUD reads these, no PlayerPrefs per frame
+        shieldCount = PlayerPrefs.GetInt("PowerUp_Shield", 0);
+        magnetCount = PlayerPrefs.GetInt("PowerUp_Magnet", 0);
+        clockCount  = PlayerPrefs.GetInt("PowerUp_Clock",  0);
+        // Load permanent unlock state
+        shieldUnlocked = PlayerPrefs.GetInt("Shield_Unlocked", 0) == 1;
+        magnetUnlocked = PlayerPrefs.GetInt("Magnet_Unlocked", 0) == 1;
+        clockUnlocked  = PlayerPrefs.GetInt("Clock_Unlocked",  0) == 1;
         PlayerPrefs.Save();
+    }
+
+    // Called by PhaseManager when a new phase is reached.
+    // Returns the display name of the newly unlocked power-up, or null if nothing new.
+    public string UnlockForPhase(int phase)
+    {
+        switch (phase)
+        {
+            case 2:
+                if (!shieldUnlocked)
+                {
+                    shieldUnlocked = true;
+                    PlayerPrefs.SetInt("Shield_Unlocked", 1);
+                    PlayerPrefs.Save();
+                    return "SHIELD";
+                }
+                break;
+            case 3:
+                if (!magnetUnlocked)
+                {
+                    magnetUnlocked = true;
+                    PlayerPrefs.SetInt("Magnet_Unlocked", 1);
+                    PlayerPrefs.Save();
+                    return "MAGNET";
+                }
+                break;
+            case 4:
+                if (!clockUnlocked)
+                {
+                    clockUnlocked = true;
+                    PlayerPrefs.SetInt("Clock_Unlocked", 1);
+                    PlayerPrefs.Save();
+                    return "CLOCK";
+                }
+                break;
+        }
+        return null;
     }
 
     void Update()
@@ -46,13 +108,12 @@ public class PowerUpManager : MonoBehaviour
     // ── Shield ───────────────────────────────────────────────
     public bool ActivateShield()
     {
-        int count = PlayerPrefs.GetInt("PowerUp_Shield", 0);
-        if (count <= 0 || shieldActive) return false;
-        PlayerPrefs.SetInt("PowerUp_Shield", count - 1);
+        if (!shieldUnlocked || shieldCount <= 0 || shieldActive) return false;
+        shieldCount--;
+        PlayerPrefs.SetInt("PowerUp_Shield", shieldCount);
         PlayerPrefs.Save();
         shieldActive = true;
-        BallController ball = FindObjectOfType<BallController>();
-        if (ball != null) ball.ShowShield(true);
+        if (BallController.instance != null) BallController.instance.ShowShield(true);
         return true;
     }
 
@@ -62,17 +123,16 @@ public class PowerUpManager : MonoBehaviour
     {
         if (!shieldActive) return false;
         shieldActive = false;
-        BallController ball = FindObjectOfType<BallController>();
-        if (ball != null) ball.ShowShield(false);
+        if (BallController.instance != null) BallController.instance.ShowShield(false);
         return true;
     }
 
     // ── Magnet ───────────────────────────────────────────────
     public bool ActivateMagnet()
     {
-        int count = PlayerPrefs.GetInt("PowerUp_Magnet", 0);
-        if (count <= 0) return false;
-        PlayerPrefs.SetInt("PowerUp_Magnet", count - 1);
+        if (!magnetUnlocked || magnetCount <= 0) return false;
+        magnetCount--;
+        PlayerPrefs.SetInt("PowerUp_Magnet", magnetCount);
         PlayerPrefs.Save();
         magnetActive = true;
         magnetTimer  = magnetDuration;
@@ -82,9 +142,9 @@ public class PowerUpManager : MonoBehaviour
     // ── Clock ────────────────────────────────────────────────
     public bool ActivateClock()
     {
-        int count = PlayerPrefs.GetInt("PowerUp_Clock", 0);
-        if (count <= 0 || clockActive) return false;
-        PlayerPrefs.SetInt("PowerUp_Clock", count - 1);
+        if (!clockUnlocked || clockCount <= 0 || clockActive) return false;
+        clockCount--;
+        PlayerPrefs.SetInt("PowerUp_Clock", clockCount);
         PlayerPrefs.Save();
         clockActive = true;
         clockTimer  = clockDuration;

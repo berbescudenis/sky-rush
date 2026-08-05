@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 7356917645146325767}
   - component: {fileID: 5290736563577179159}
   - component: {fileID: 3326924797783534211}
-  - component: {fileID: 2653536168842486127}
   m_Layer: 0
   m_Name: Coin
   m_TagString: Untagged
@@ -129,26 +128,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Coin
   rotateSpeed: 180
---- !u!136 &2653536168842486127
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2396692155069562184}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+  magnetSpeed: 18

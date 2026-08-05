@@ -9,12 +9,20 @@ public class ScoreManager : MonoBehaviour
     private float distanceMeters = 0f;
     private Transform ball;
 
-    void Awake() { instance = this; }
+    // Cached so GetBestScore() never reads PlayerPrefs per-frame
+    private int cachedBestScore;
+    private int cachedBestDistance;
+
+    void Awake()
+    {
+        instance = this;
+        cachedBestScore    = PlayerPrefs.GetInt("BestScore",    0);
+        cachedBestDistance = PlayerPrefs.GetInt("BestDistance", 0);
+    }
 
     void Start()
     {
-        BallController b = FindObjectOfType<BallController>();
-        if (b != null) ball = b.transform;
+        if (BallController.instance != null) ball = BallController.instance.transform;
     }
 
     void Update()
@@ -37,23 +45,23 @@ public class ScoreManager : MonoBehaviour
     void SaveBestScore()
     {
         int current = GetScore();
-        int best = PlayerPrefs.GetInt("BestScore", 0);
-        if (current > best)
+        if (current > cachedBestScore)
         {
-            PlayerPrefs.SetInt("BestScore", current);
+            cachedBestScore = current;
+            PlayerPrefs.SetInt("BestScore", cachedBestScore);
             PlayerPrefs.Save();
         }
         int dist = GetDistanceMeters();
-        int bestDist = PlayerPrefs.GetInt("BestDistance", 0);
-        if (dist > bestDist)
+        if (dist > cachedBestDistance)
         {
-            PlayerPrefs.SetInt("BestDistance", dist);
+            cachedBestDistance = dist;
+            PlayerPrefs.SetInt("BestDistance", cachedBestDistance);
             PlayerPrefs.Save();
         }
     }
 
-    public int GetScore() { return Mathf.FloorToInt(score); }
-    public int GetBestScore() { return PlayerPrefs.GetInt("BestScore", 0); }
+    public int GetScore()          { return Mathf.FloorToInt(score); }
+    public int GetBestScore()      { return cachedBestScore; }          // no PlayerPrefs read
     public int GetDistanceMeters() { return Mathf.FloorToInt(distanceMeters); }
     public string GetDistanceString()
     {

@@ -13,7 +13,7 @@ public class CameraFollow : MonoBehaviour
     void Start()
     {
         cam = GetComponent<Camera>();
-        ball = FindObjectOfType<BallController>();
+        ball = BallController.instance;
     }
 
     void LateUpdate()

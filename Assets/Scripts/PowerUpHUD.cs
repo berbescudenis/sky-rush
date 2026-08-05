@@ -19,12 +19,14 @@ public class PowerUpHUD : MonoBehaviour
     public Slider           clockTimerBar;
 
     // Cache last-shown state — text only rebuilds when something actually changes
-    private int  lastShields      = -1;
-    private int  lastMagnets      = -1;
-    private int  lastClocks       = -1;
-    private bool lastShieldLocked = true;   // assume locked → forces first-frame update
-    private bool lastMagnetLocked = true;
-    private bool lastClockLocked  = true;
+    private int  lastShields         = -1;
+    private int  lastMagnets         = -1;
+    private int  lastClocks          = -1;
+    private bool lastShieldLocked    = true;
+    private bool lastMagnetLocked    = true;
+    private bool lastClockLocked     = true;
+    private int  lastMagnetCooldown  = -1;
+    private int  lastClockCooldown   = -1;
 
     void Update()
     {
@@ -39,6 +41,11 @@ public class PowerUpHUD : MonoBehaviour
         int magnets = pm.MagnetCount;
         int clocks  = pm.ClockCount;
 
+        bool magnetOnCooldown = pm.IsMagnetOnCooldown;
+        bool clockOnCooldown  = pm.IsClockOnCooldown;
+        int  magnetCdSec      = Mathf.CeilToInt(pm.MagnetCooldownLeft);
+        int  clockCdSec       = Mathf.CeilToInt(pm.ClockCooldownLeft);
+
         // Shield
         if (shieldCountText != null && (shieldLocked != lastShieldLocked || shields != lastShields))
         {
@@ -46,30 +53,50 @@ public class PowerUpHUD : MonoBehaviour
             lastShields      = shields;
             shieldCountText.text = shieldLocked ? "Ph.2" : shields.ToString();
         }
-        // Magnet
-        if (magnetCountText != null && (magnetLocked != lastMagnetLocked || magnets != lastMagnets))
+        // Magnet — locked > cooldown > count
+        if (magnetCountText != null)
         {
-            lastMagnetLocked = magnetLocked;
-            lastMagnets      = magnets;
-            magnetCountText.text = magnetLocked ? "Ph.3" : magnets.ToString();
+            if (magnetLocked != lastMagnetLocked || magnets != lastMagnets || magnetCdSec != lastMagnetCooldown)
+            {
+                lastMagnetLocked   = magnetLocked;
+                lastMagnets        = magnets;
+                lastMagnetCooldown = magnetCdSec;
+                if      (magnetLocked)    magnetCountText.text = "Ph.3";
+                else if (magnetOnCooldown) magnetCountText.text = magnetCdSec + "s";
+                else                      magnetCountText.text = magnets.ToString();
+            }
         }
-        // Clock
-        if (clockCountText != null && (clockLocked != lastClockLocked || clocks != lastClocks))
+        // Clock — locked > cooldown > count
+        if (clockCountText != null)
         {
-            lastClockLocked = clockLocked;
-            lastClocks      = clocks;
-            clockCountText.text = clockLocked ? "Ph.4" : clocks.ToString();
+            if (clockLocked != lastClockLocked || clocks != lastClocks || clockCdSec != lastClockCooldown)
+            {
+                lastClockLocked   = clockLocked;
+                lastClocks        = clocks;
+                lastClockCooldown = clockCdSec;
+                if      (clockLocked)    clockCountText.text = "Ph.4";
+                else if (clockOnCooldown) clockCountText.text = clockCdSec + "s";
+                else                      clockCountText.text = clocks.ToString();
+            }
         }
 
         if (shieldButton != null) shieldButton.interactable = !shieldLocked && shields > 0 && !pm.IsShieldActive;
-        if (magnetButton != null) magnetButton.interactable = !magnetLocked && magnets > 0 && !pm.IsMagnetActive;
-        if (clockButton  != null) clockButton.interactable  = !clockLocked  && clocks  > 0 && !pm.IsClockActive;
+        if (magnetButton != null) magnetButton.interactable = !magnetLocked && magnets > 0 && !pm.IsMagnetActive && !magnetOnCooldown;
+        if (clockButton  != null) clockButton.interactable  = !clockLocked  && clocks  > 0 && !pm.IsClockActive  && !clockOnCooldown;
 
         if (magnetTimerBar != null)
-            magnetTimerBar.value = pm.IsMagnetActive ? pm.MagnetTimeLeft / pm.magnetDuration : 0f;
+        {
+            if      (pm.IsMagnetActive)   magnetTimerBar.value = pm.MagnetTimeLeft     / pm.magnetDuration;
+            else if (magnetOnCooldown)    magnetTimerBar.value = pm.MagnetCooldownLeft / pm.magnetCooldownDuration;
+            else                          magnetTimerBar.value = 0f;
+        }
 
         if (clockTimerBar != null)
-            clockTimerBar.value = pm.IsClockActive ? pm.ClockTimeLeft / pm.clockDuration : 0f;
+        {
+            if      (pm.IsClockActive)   clockTimerBar.value = pm.ClockTimeLeft     / pm.clockDuration;
+            else if (clockOnCooldown)    clockTimerBar.value = pm.ClockCooldownLeft / pm.clockCooldownDuration;
+            else                         clockTimerBar.value = 0f;
+        }
     }
 
     public void OnShieldPressed() { PowerUpManager.instance?.ActivateShield(); }

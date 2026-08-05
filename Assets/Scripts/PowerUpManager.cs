@@ -8,11 +8,17 @@ public class PowerUpManager : MonoBehaviour
     public float magnetDuration = 10f;
     public float clockDuration  = 5f;
 
+    [Header("Cooldowns")]
+    public float magnetCooldownDuration = 30f;
+    public float clockCooldownDuration  = 60f;
+
     private bool  shieldActive = false;
     private bool  magnetActive = false;
     private bool  clockActive  = false;
-    private float magnetTimer  = 0f;
-    private float clockTimer   = 0f;
+    private float magnetTimer         = 0f;
+    private float clockTimer          = 0f;
+    private float magnetCooldownTimer = 0f;
+    private float clockCooldownTimer  = 0f;
 
     // Cached in Awake — PowerUpHUD reads these instead of PlayerPrefs per-frame
     private int  shieldCount;
@@ -24,17 +30,21 @@ public class PowerUpManager : MonoBehaviour
     private bool magnetUnlocked;
     private bool clockUnlocked;
 
-    public bool  IsShieldActive   => shieldActive;
-    public bool  IsMagnetActive   => magnetActive;
-    public bool  IsClockActive    => clockActive;
-    public float MagnetTimeLeft   => magnetTimer;
-    public float ClockTimeLeft    => clockTimer;
-    public int   ShieldCount      => shieldCount;
-    public int   MagnetCount      => magnetCount;
-    public int   ClockCount       => clockCount;
-    public bool  IsShieldUnlocked => shieldUnlocked;
-    public bool  IsMagnetUnlocked => magnetUnlocked;
-    public bool  IsClockUnlocked  => clockUnlocked;
+    public bool  IsShieldActive         => shieldActive;
+    public bool  IsMagnetActive         => magnetActive;
+    public bool  IsClockActive          => clockActive;
+    public bool  IsMagnetOnCooldown     => magnetCooldownTimer > 0f;
+    public bool  IsClockOnCooldown      => clockCooldownTimer  > 0f;
+    public float MagnetTimeLeft         => magnetTimer;
+    public float ClockTimeLeft          => clockTimer;
+    public float MagnetCooldownLeft     => magnetCooldownTimer;
+    public float ClockCooldownLeft      => clockCooldownTimer;
+    public int   ShieldCount            => shieldCount;
+    public int   MagnetCount            => magnetCount;
+    public int   ClockCount             => clockCount;
+    public bool  IsShieldUnlocked       => shieldUnlocked;
+    public bool  IsMagnetUnlocked       => magnetUnlocked;
+    public bool  IsClockUnlocked        => clockUnlocked;
 
     void Awake()
     {
@@ -96,12 +106,23 @@ public class PowerUpManager : MonoBehaviour
         if (magnetActive)
         {
             magnetTimer -= Time.deltaTime;
-            if (magnetTimer <= 0f) magnetActive = false;
+            if (magnetTimer <= 0f) { magnetActive = false; magnetCooldownTimer = magnetCooldownDuration; }
         }
+        else if (magnetCooldownTimer > 0f)
+        {
+            magnetCooldownTimer -= Time.deltaTime;
+            if (magnetCooldownTimer < 0f) magnetCooldownTimer = 0f;
+        }
+
         if (clockActive)
         {
             clockTimer -= Time.unscaledDeltaTime;
             if (clockTimer <= 0f) DeactivateClock();
+        }
+        else if (clockCooldownTimer > 0f)
+        {
+            clockCooldownTimer -= Time.unscaledDeltaTime;
+            if (clockCooldownTimer < 0f) clockCooldownTimer = 0f;
         }
     }
 
@@ -130,7 +151,7 @@ public class PowerUpManager : MonoBehaviour
     // ── Magnet ───────────────────────────────────────────────
     public bool ActivateMagnet()
     {
-        if (!magnetUnlocked || magnetCount <= 0) return false;
+        if (!magnetUnlocked || magnetCount <= 0 || magnetCooldownTimer > 0f) return false;
         magnetCount--;
         PlayerPrefs.SetInt("PowerUp_Magnet", magnetCount);
         PlayerPrefs.Save();
@@ -142,7 +163,7 @@ public class PowerUpManager : MonoBehaviour
     // ── Clock ────────────────────────────────────────────────
     public bool ActivateClock()
     {
-        if (!clockUnlocked || clockCount <= 0 || clockActive) return false;
+        if (!clockUnlocked || clockCount <= 0 || clockActive || clockCooldownTimer > 0f) return false;
         clockCount--;
         PlayerPrefs.SetInt("PowerUp_Clock", clockCount);
         PlayerPrefs.Save();
@@ -158,5 +179,6 @@ public class PowerUpManager : MonoBehaviour
         clockActive         = false;
         Time.timeScale      = 1f;
         Time.fixedDeltaTime = 0.02f;
+        clockCooldownTimer  = clockCooldownDuration;
     }
 }

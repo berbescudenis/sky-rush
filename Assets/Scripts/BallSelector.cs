@@ -7,6 +7,10 @@ public class BallSelector : MonoBehaviour
     public TextMeshProUGUI ballNameText;
     public TextMeshProUGUI ballRarityText;
 
+    [Header("Preview")]
+    public Renderer previewBallRenderer;
+    public Material[] ballMaterials;
+
     private static readonly string[] BallNames     = { "NEBULA", "INFERNO", "GLACIER", "VORTEX", "PHANTOM" };
     private static readonly string[] BallRarities  = { "COMMON", "RARE",    "RARE",    "EPIC",   "LEGENDARY" };
 
@@ -41,6 +45,9 @@ public class BallSelector : MonoBehaviour
     {
         if (ballNameText != null)   ballNameText.text   = BallNames[selectedIndex];
         if (ballRarityText != null) ballRarityText.text = BallRarities[selectedIndex];
+
+        if (previewBallRenderer != null && ballMaterials != null && selectedIndex < ballMaterials.Length)
+            previewBallRenderer.material = ballMaterials[selectedIndex];
     }
 
     public int GetSelectedIndex() => selectedIndex;

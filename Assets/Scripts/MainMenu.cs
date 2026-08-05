@@ -47,7 +47,7 @@ public class MainMenu : MonoBehaviour
         RefreshAll();
     }
 
-    void RefreshAll()
+    public void RefreshAll()
     {
         RefreshProfile();
         RefreshCurrencies();
@@ -108,9 +108,13 @@ public class MainMenu : MonoBehaviour
 
     void RefreshPowerUps()
     {
-        if (shieldCountText != null) shieldCountText.text = PlayerPrefs.GetInt("PowerUp_Shield", 3).ToString();
-        if (magnetCountText != null) magnetCountText.text = PlayerPrefs.GetInt("PowerUp_Magnet", 3).ToString();
-        if (clockCountText  != null) clockCountText.text  = PlayerPrefs.GetInt("PowerUp_Clock",  3).ToString();
+        bool shieldUnlocked = PlayerPrefs.GetInt("Shield_Unlocked", 0) == 1;
+        bool magnetUnlocked = PlayerPrefs.GetInt("Magnet_Unlocked", 0) == 1;
+        bool clockUnlocked  = PlayerPrefs.GetInt("Clock_Unlocked",  0) == 1;
+
+        if (shieldCountText != null) shieldCountText.text = shieldUnlocked ? PlayerPrefs.GetInt("PowerUp_Shield", 0).ToString() : "🔒";
+        if (magnetCountText != null) magnetCountText.text = magnetUnlocked ? PlayerPrefs.GetInt("PowerUp_Magnet", 0).ToString() : "🔒";
+        if (clockCountText  != null) clockCountText.text  = clockUnlocked  ? PlayerPrefs.GetInt("PowerUp_Clock",  0).ToString() : "🔒";
     }
 
     // ── Buttons ──────────────────────────────────────────────

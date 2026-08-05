@@ -1,10 +1,13 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class BallController : MonoBehaviour
 {
+    public static BallController instance;
+
     public float startSpeed = 10f;
     public float maxSpeed = 50f;
-    public float speedIncreaseRate = 0.8f;
+    public float speedIncreaseRate = 0.15f;
     public float laneDistance = 2f;
     public float laneSwitchSpeed = 8f;
     public float jumpForce = 7f;
@@ -12,6 +15,7 @@ public class BallController : MonoBehaviour
 
     [HideInInspector] public float currentSpeed;
     private int currentLane = 1;
+    private int jumpsThisRun = 0;
     private float targetX;
     private Rigidbody rb;
     private bool isDead = false;
@@ -19,10 +23,17 @@ public class BallController : MonoBehaviour
     private bool isGrounded = false;
 
     [SerializeField] private UnityEngine.UI.Image flashOverlay;
+    public Material[] ballMaterials;
+    public GameObject shieldVisual;
 
     private Vector2 touchStart;
     private bool isSwiping = false;
-    private float swipeThreshold = 50f;
+    private float swipeThreshold = 20f;
+
+    void Awake()
+    {
+        instance = this;
+    }
 
     void Start()
     {
@@ -30,6 +41,23 @@ public class BallController : MonoBehaviour
         targetX = 0f;
         currentSpeed = startSpeed;
         trail = GetComponent<TrailRenderer>();
+        ApplyBallVisuals();
+    }
+
+    void ApplyBallVisuals()
+    {
+        int index = PlayerPrefs.GetInt("SelectedBall", 0);
+        if (ballMaterials == null || index >= ballMaterials.Length) return;
+
+        Renderer r = GetComponent<Renderer>();
+        if (r != null) r.material = ballMaterials[index];
+
+        if (trail != null && ballMaterials[index] != null)
+        {
+            Color c = ballMaterials[index].color;
+            trail.startColor = new Color(c.r, c.g, c.b, 1f);
+            trail.endColor   = new Color(c.r, c.g, c.b, 0f);
+        }
     }
 
     void Update()
@@ -61,7 +89,13 @@ public class BallController : MonoBehaviour
         {
             Touch touch = Input.GetTouch(0);
 
-            if (touch.phase == TouchPhase.Began)
+            // Ignore touches on UI buttons (prevents power-up taps triggering jump)
+            bool overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId);
+            if (overUI)
+            {
+                if (touch.phase == TouchPhase.Ended) isSwiping = false;
+            }
+            else if (touch.phase == TouchPhase.Began)
             {
                 touchStart = touch.position;
                 isSwiping = true;
@@ -95,14 +129,10 @@ public class BallController : MonoBehaviour
             }
         }
 
-        Vector3 pos = transform.position;
-        pos.x = Mathf.Lerp(pos.x, targetX, Time.deltaTime * laneSwitchSpeed);
-        transform.position = pos;
-
         if (trail != null)
         {
             float speedPercent = currentSpeed / maxSpeed;
-            trail.time = Mathf.Lerp(0.1f, 0.5f, speedPercent);
+            trail.time = Mathf.Lerp(0.05f, 0.25f, speedPercent);
         }
     }
 
@@ -110,12 +140,25 @@ public class BallController : MonoBehaviour
     {
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
         isGrounded = false;
-        PlayerPrefs.SetInt("TotalJumps", PlayerPrefs.GetInt("TotalJumps", 0) + 1);
+        jumpsThisRun++;
+    }
+
+    public void SaveJumps()
+    {
+        PlayerPrefs.SetInt("TotalJumps", PlayerPrefs.GetInt("TotalJumps", 0) + jumpsThisRun);
+        jumpsThisRun = 0;
     }
 
     void FixedUpdate()
     {
         if (isDead) return;
+
+        // MovePosition (not rb.position =) so Unity's interpolation smooths the rendered position
+        // between FixedUpdate ticks — prevents the stutter visible when changing lanes
+        Vector3 pos = rb.position;
+        pos.x = Mathf.MoveTowards(pos.x, targetX, Time.fixedDeltaTime * laneSwitchSpeed * laneDistance);
+        rb.MovePosition(pos);
+
         rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, currentSpeed);
 
         if (!isGrounded)
@@ -152,6 +195,11 @@ public class BallController : MonoBehaviour
         currentLane = lane;
         targetX = (lane - 1) * laneDistance;
         rb.position = new Vector3(targetX, rb.position.y, zPosition);
+    }
+
+    public void ShowShield(bool show)
+    {
+        if (shieldVisual != null) shieldVisual.SetActive(show);
     }
 
     public void Die()

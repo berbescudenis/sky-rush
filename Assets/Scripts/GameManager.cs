@@ -15,10 +15,24 @@ public class GameManager : MonoBehaviour
     public void GameOver()
     {
         if (isGameOver) return;
+
+        // Shield absorbs the hit — player survives
+        if (PowerUpManager.instance != null && PowerUpManager.instance.ConsumeShield())
+        {
+            if (CameraShake.instance != null) CameraShake.instance.Shake(0.2f, 0.15f);
+            return;
+        }
+
         isGameOver = true;
 
-        BallController ball = FindObjectOfType<BallController>();
-        if (ball != null) ball.Die();
+        // Save stats now — no more per-coin or per-jump PlayerPrefs writes during gameplay
+        if (CoinManager.instance != null) CoinManager.instance.SaveCoins();
+        if (BallController.instance != null) BallController.instance.SaveJumps();
+
+        PowerUpHUD hud = FindObjectOfType<PowerUpHUD>();
+        if (hud != null) hud.gameObject.SetActive(false);
+
+        if (BallController.instance != null) BallController.instance.Die();
 
         if (ScoreManager.instance != null) ScoreManager.instance.StopScore();
 
